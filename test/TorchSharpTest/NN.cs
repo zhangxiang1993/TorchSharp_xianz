@@ -355,7 +355,7 @@ namespace TorchSharp
         [Fact]
         public void EvaluateRelu()
         {
-            var rel = ReLU().to(torch.DirectML);
+            var rel = ReLU();
             var input = torch.randn(new long[] { 64, 8 }).to(torch.DirectML);
             var output = rel.forward(input);
             var values = output.to(torch.CPU).data<float>().ToArray();
@@ -458,7 +458,7 @@ namespace TorchSharp
         [Fact]
         public void EvaluateGELU()
         {
-            var rel = GELU().to(torch.DirectML);
+            var rel = GELU();
             var input = torch.randn(new long[] { 64, 8 }).to(torch.DirectML) * 25.0;
             var output = rel.forward(input);
             var values = output.to(torch.CPU).data<float>().ToArray();
@@ -646,12 +646,31 @@ namespace TorchSharp
             var lin2 = Linear(100, 10);
             var seq = Sequential(
                 ("lin1", lin1),
-                ("relu1", ReLU()));
+                ("gelu1", GELU()));
 
             var seq1 = Sequential(seq, lin2);
 
-            var x = torch.randn(new long[] { 64, 1000 }, requires_grad: true);
-            var eval = seq.call(x);
+            Tensor cpu_data, dml_data;
+
+            var x = torch.randn(new long[] { 64, 1000 }, requires_grad: false);
+
+            {
+                var eval = seq.call(x);
+
+                Assert.Equal(x.device_type, eval.device_type);
+                cpu_data = eval;
+            }
+
+            {
+                x = x.to(torch.DirectML);
+                seq = seq.to(torch.DirectML);
+
+                var eval = seq.call(x);
+                Assert.Equal(x.device_type, eval.device_type);
+                dml_data = eval.cpu();
+            }
+
+            Assert.True(torch.allclose(cpu_data, dml_data, rtol: 1e-03));
         }
 
         [Fact]
@@ -854,8 +873,8 @@ namespace TorchSharp
         [Fact]
         public void TestPoissonNLLLoss()
         {
-            using (Tensor input = torch.tensor(new float[] { 0.5f, 1.5f, 2.5f }))
-            using (Tensor target = torch.tensor(new float[] { 1f, 2f, 3f })) {
+            using (Tensor input = torch.tensor(new float[] { 0.5f, 1.5f, 2.5f }).to(torch.DirectML))
+            using (Tensor target = torch.tensor(new float[] { 1f, 2f, 3f }).to(torch.DirectML)) {
                 var componentWiseLoss = ((Tensor)input.exp()) - target * input;
                 Assert.True(componentWiseLoss.Equals(torch.nn.PoissonNLLLoss(reduction: Reduction.None).call(input, target)));
                 Assert.True(componentWiseLoss.sum().Equals(torch.nn.PoissonNLLLoss(reduction: Reduction.Sum).call(input, target)));
@@ -1756,8 +1775,8 @@ namespace TorchSharp
         public void TestConv1d()
         {
             var shape = new long[] { 16, 3, 28 };
-            Tensor t = torch.rand(shape);
-            var conv = Conv1d(3, 64, 3);
+            Tensor t = torch.rand(shape).to(torch.DirectML);
+            var conv = Conv1d(3, 64, 3, device: torch.DirectML);
             var output = conv.call(t);
             Assert.Equal(16, output.shape[0]);
             Assert.Equal(64, output.shape[1]);

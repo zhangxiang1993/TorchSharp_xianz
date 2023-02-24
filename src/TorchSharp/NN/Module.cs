@@ -148,7 +148,7 @@ namespace TorchSharp
                 /// <param name="dtype">The target element type.</param>
                 protected internal virtual Module _to(Device device, ScalarType dtype)
                 {
-                    if (device.type != DeviceType.CUDA) { device = new Device(device.type, -1); };
+                    if (device.type != DeviceType.CUDA && device.type != DeviceType.PRIVATEUSE1) { device = new Device(device.type, -1); };
 
                     if (device.type == DeviceType.CUDA && !torch.cuda.is_available()) throw new InvalidOperationException("CUDA is not available.");
 
@@ -217,7 +217,7 @@ namespace TorchSharp
                     _deviceType = device.type;
                     _deviceIndex = device.index;
 
-                    Debug.Assert(_deviceType == DeviceType.CUDA || _deviceIndex == -1);
+                    Debug.Assert(_deviceType == DeviceType.CUDA || _deviceType == DeviceType.PRIVATEUSE1 || _deviceIndex == -1);
                 }
 
 
@@ -229,7 +229,7 @@ namespace TorchSharp
                 /// <returns></returns>
                 protected internal virtual Module _to(DeviceType deviceType, int deviceIndex = -1)
                 {
-                    if (deviceType != DeviceType.CUDA) deviceIndex = -1;
+                    if (deviceType != DeviceType.CUDA && deviceType != DeviceType.PRIVATEUSE1) deviceIndex = -1;
 
                     if (deviceType == DeviceType.CUDA && !torch.cuda.is_available()) throw new InvalidOperationException("CUDA is not available.");
 
@@ -242,7 +242,7 @@ namespace TorchSharp
                         _toEpilog(deviceType, deviceIndex);
                     }
 
-                    Debug.Assert(_deviceType == DeviceType.CUDA || _deviceIndex == -1);
+                    Debug.Assert(_deviceType == DeviceType.CUDA || _deviceType == DeviceType.PRIVATEUSE1 || _deviceIndex == -1);
 
                     return this;
                 }

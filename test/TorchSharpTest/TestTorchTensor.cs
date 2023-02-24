@@ -3567,7 +3567,7 @@ namespace TorchSharp
         public void CopyCpuToCuda()
         {
             Tensor cpu = torch.ones(new long[] { 2, 2 }, device: torch.DirectML);
-            Assert.Equal("privateuse1:0", cpu.device.ToString());
+            Assert.Equal("cpu", cpu.device.ToString());
 
             if (torch.cuda.is_available()) {
                 var cuda = cpu.cuda();
@@ -3582,6 +3582,24 @@ namespace TorchSharp
                 }
             } else {
                 Assert.Throws<InvalidOperationException>(() => cpu.cuda());
+            }
+        }
+
+        [Fact]
+        public void CopyCpuToDirectML()
+        {
+            Tensor cpu = torch.ones(new long[] { 2, 2 });
+            Assert.Equal("cpu", cpu.device.ToString());
+
+            var dml = cpu.to(torch.DirectML);
+            Assert.Equal("privateuse1:0", dml.device.ToString());
+
+            // Copy back to CPU to inspect the elements
+            var cpu2 = dml.cpu();
+            Assert.Equal("cpu", cpu2.device.ToString());
+            var data = cpu.data<float>();
+            for (int i = 0; i < 4; i++) {
+                Assert.Equal(1, data[i]);
             }
         }
 
