@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation and Contributors.  All Rights Reserved.  See LICENSE in the project root for license information.
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -14,6 +15,20 @@ using System.Drawing;
 
 namespace TorchSharp
 {
+
+    static internal class TestUtils
+    {
+        public static IList<Device> AvailableDevices {
+            get {
+                List<Device> result = new List<Device>();
+                result.Add(torch.CPU);
+                if (torch.cuda_is_available()) result.Add(torch.CUDA);
+                result.Add(torch.DirectML);
+                return result;
+            }
+        }
+    }
+
 #if NET472_OR_GREATER
     [Collection("Sequential")]
 #endif // NET472_OR_GREATER
@@ -48,21 +63,10 @@ namespace TorchSharp
         [Fact]
         public void TestDeviceAndTypeLinear()
         {
+            foreach (var device in TestUtils.AvailableDevices)
             {
-                var lin = Linear(1000, 100, true, dtype: torch.float64);
-                var ps = lin.parameters().ToArray();
-                var nps = ps.Count();
-
-                Assert.Multiple(
-                    () => Assert.Equal(2, nps),
-                    () => Assert.False(lin.bias is null),
-                    () => Assert.Equal(torch.float64, ps[0].dtype),
-                    () => Assert.Equal(torch.float64, ps[1].dtype)
-                );
-            }
-            if (torch.cuda.is_available()) {
                 {
-                    var lin = Linear(1000, 100, true, device: torch.CUDA, dtype: torch.float64);
+                    var lin = Linear(1000, 100, true, dtype: torch.float64).to(device);
                     var ps = lin.parameters().ToArray();
                     var nps = ps.Count();
 
@@ -71,12 +75,12 @@ namespace TorchSharp
                         () => Assert.False(lin.bias is null),
                         () => Assert.Equal(torch.float64, ps[0].dtype),
                         () => Assert.Equal(torch.float64, ps[1].dtype),
-                        () => Assert.Equal(DeviceType.CUDA, ps[0].device_type),
-                        () => Assert.Equal(DeviceType.CUDA, ps[1].device_type)
+                        () => Assert.Equal(device.type, ps[0].device_type),
+                        () => Assert.Equal(device.type, ps[1].device_type)
                     );
                 }
                 {
-                    var lin = Linear(1000, 100, true, device: torch.CUDA);
+                    var lin = Linear(1000, 100, true).to(device);
                     var ps = lin.parameters().ToArray();
                     var nps = ps.Count();
 
@@ -85,8 +89,8 @@ namespace TorchSharp
                         () => Assert.False(lin.bias is null),
                         () => Assert.Equal(torch.float32, ps[0].dtype),
                         () => Assert.Equal(torch.float32, ps[1].dtype),
-                        () => Assert.Equal(DeviceType.CUDA, ps[0].device_type),
-                        () => Assert.Equal(DeviceType.CUDA, ps[1].device_type)
+                        () => Assert.Equal(device.type, ps[0].device_type),
+                        () => Assert.Equal(device.type, ps[1].device_type)
                     );
                 }
             }
