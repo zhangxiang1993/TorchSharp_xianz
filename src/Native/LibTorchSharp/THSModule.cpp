@@ -28,8 +28,18 @@ void THSNN_Module_zero_grad(const NNModule module)
 void THSNN_Module_to_device(NNModule module, int64_t device, int64_t index)
 {
     c10::DeviceType dev = c10::kCPU;
-    if (device == 1)
+    switch (device)
+    {
+    case 0:
+        dev = c10::kCPU;
+        break;
+    case 1:
         dev = c10::kCUDA;
+        break;
+    case 19:
+        dev = c10::kPrivateUse1;
+        break;
+    }
     (*module)->to(torch::Device(dev, index));
 }
 
@@ -41,8 +51,18 @@ void THSNN_Module_to_dtype(NNModule module, int8_t dtype)
 void THSNN_Module_to_device_dtype(NNModule module, int8_t dtype, int64_t device, int64_t index)
 {
     c10::DeviceType dev = c10::kCPU;
-    if (device == 1)
+    switch (device)
+    {
+    case 0:
+        dev = c10::kCPU;
+        break;
+    case 1:
         dev = c10::kCUDA;
+        break;
+    case 19:
+        dev = c10::kPrivateUse1;
+        break;
+    }
     (*module)->to(torch::Device(dev, index), (at::ScalarType)dtype);
 }
 
@@ -231,3 +251,14 @@ NNModule THSNN_custom_module(const char* name,
     );
 }
 
+#if 0
+struct TORCH_API ModuleBackWardHook1 : public torch::autograd::FunctionPostHook {
+
+    virtual ~ModuleBackWardHook1() { }
+    virtual torch::autograd::variable_list operator()(
+        const torch::autograd::variable_list& outputs /* grad_inputs */,
+        const torch::autograd::variable_list& inputs /* grad_outputs */)
+    {
+    } 
+};
+#endif
