@@ -21,7 +21,7 @@ namespace TorchSharp
         {
             List<Device> result = new List<Device>();
             result.Add(torch.CPU);
-            if (cuda && torch.cuda_is_available()) result.Add(torch.CUDA);
+            //if (cuda && torch.cuda_is_available()) result.Add(torch.CUDA);
             result.Add(torch.DirectML);
             return result;
         }
