@@ -2255,7 +2255,7 @@ namespace TorchSharp
             //TODO: Figure out why this is failing on CUDA.
             foreach (var device in TestUtils.AvailableDevices(false)) {
 
-                Tensor t = torch.rand(shape);
+                Tensor t = torch.rand(shape, device: device);
                 using (var conv = Conv2d(3, 64, 3, padding: 1, device: device))
                 using (var output = conv.call(t)) {
                     Assert.Equal(device.type, output.device_type);
@@ -2439,6 +2439,7 @@ namespace TorchSharp
                 Tensor t = torch.rand(shape, device: device);
                 var conv = ConvTranspose2d(3, 64, 3, device: device);
                 var output = conv.call(t);
+                Assert.Equal(device.type, output.device_type);
                 Assert.Equal(16, output.shape[0]);
                 Assert.Equal(64, output.shape[1]);
                 Assert.Equal(30, output.shape[2]);
@@ -2455,6 +2456,7 @@ namespace TorchSharp
                 Tensor t = torch.rand(shape, device: device);
                 var conv = ConvTranspose3d(3, 64, 3, device: device);
                 var output = conv.call(t);
+                Assert.Equal(device.type, output.device_type);
                 Assert.Equal(16, output.shape[0]);
                 Assert.Equal(64, output.shape[1]);
                 Assert.Equal(30, output.shape[2]);

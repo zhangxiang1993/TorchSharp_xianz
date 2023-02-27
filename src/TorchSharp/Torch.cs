@@ -595,5 +595,6 @@ namespace TorchSharp
         XLA = 9, // XLA / TPU
         META = 14,
         PRIVATEUSE1 = 19, // DirectML
+        DIRECTML = 19, // DirectML -- the use of '19' here is **not** a mistake.
     }
 }
