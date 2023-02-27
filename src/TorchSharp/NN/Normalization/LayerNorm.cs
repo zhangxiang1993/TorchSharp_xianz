@@ -52,6 +52,34 @@ namespace TorchSharp
                     ConditionallyRegisterParameter("weight", value);
                 }
             }
+
+            protected internal override Module _to(Device device, ScalarType dtype)
+            {
+                if (device.type != DeviceType.DIRECTML) return base._to(device, dtype);
+
+                if (bias is not null) {
+                    bias = bias.to(dtype, device).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(dtype, device).AsParameter();
+                }
+                _toEpilog(device, dtype);
+                return this;
+            }
+
+            protected internal override Module _to(DeviceType deviceType, int deviceIndex = -1)
+            {
+                if (deviceType != DeviceType.DIRECTML) return base._to(deviceType, deviceIndex);
+
+                if (bias is not null) {
+                    bias = bias.to(deviceType, deviceIndex).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(deviceType, deviceIndex).AsParameter();
+                }
+                _toEpilog(deviceType, deviceIndex);
+                return this;
+            }
         }
     }
 

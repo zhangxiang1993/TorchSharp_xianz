@@ -93,6 +93,46 @@ namespace TorchSharp
                 THSNN_InstanceNorm3d_reset_stats(handle);
                 torch.CheckForErrors();
             }
+
+            protected internal override torch.nn.Module _to(Device device, ScalarType dtype)
+            {
+                if (device.type != DeviceType.DIRECTML) return base._to(device, dtype);
+
+                if (bias is not null) {
+                    bias = bias.to(dtype, device).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(dtype, device).AsParameter();
+                }
+                if (running_mean is not null) {
+                    running_mean = running_mean.to(dtype, device);
+                }
+                if (running_var is not null) {
+                    running_var = running_var.to(dtype, device);
+                }
+                _toEpilog(device, dtype);
+                return this;
+            }
+
+            protected internal override torch.nn.Module _to(DeviceType deviceType, int deviceIndex = -1)
+            {
+                if (deviceType != DeviceType.DIRECTML) return base._to(deviceType, deviceIndex);
+
+                if (bias is not null) {
+                    bias = bias.to(deviceType, deviceIndex).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(deviceType, deviceIndex).AsParameter();
+                }
+                if (running_mean is not null) {
+                    running_mean = running_mean.to(deviceType, deviceIndex);
+                }
+                if (running_var is not null) {
+                    running_var = running_var.to(deviceType, deviceIndex);
+                }
+                _toEpilog(deviceType, deviceIndex);
+                return this;
+            }
         }
     }
 
