@@ -46,6 +46,34 @@ namespace TorchSharp
                     ConditionallyRegisterParameter("weight", value);
                 }
             }
+
+            protected internal override torch.nn.Module _to(Device device, ScalarType dtype)
+            {
+                if (device.type != DeviceType.DIRECTML) return base._to(device, dtype);
+
+                if (bias is not null) {
+                    bias = bias.to(dtype, device).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(dtype, device).AsParameter();
+                }
+                _toEpilog(device, dtype);
+                return this;
+            }
+
+            protected internal override torch.nn.Module _to(DeviceType deviceType, int deviceIndex = -1)
+            {
+                if (deviceType != DeviceType.DIRECTML) return base._to(deviceType, deviceIndex);
+
+                if (bias is not null) {
+                    bias = bias.to(deviceType, deviceIndex).AsParameter();
+                }
+                if (weight is not null) {
+                    weight = weight.to(deviceType, deviceIndex).AsParameter();
+                }
+                _toEpilog(deviceType, deviceIndex);
+                return this;
+            }
         }
     }
 
@@ -74,6 +102,49 @@ namespace TorchSharp
                 var res = THSNN_ConvTranspose2d_ctor(inputChannel, outputChannel, kernelSize, stride, padding, outputPadding, dilation, (long)paddingMode, groups, bias, out var boxedHandle);
                 if (res == IntPtr.Zero) { torch.CheckForErrors(); }
                 return new ConvTranspose2d(res, boxedHandle).MoveModule<ConvTranspose2d>(device, dtype);
+            }
+
+            public static partial class functional
+            {
+                /// <summary>
+                /// Applies a 2D transposed convolution operator over an input image composed of several input planes, sometimes also called “deconvolution”.
+                /// </summary>
+                /// <param name="input">The input tensor.</param>
+                /// <param name="weight"></param>
+                /// <param name="bias"></param>
+                /// <param name="strides"></param>
+                /// <param name="padding"></param>
+                /// <param name="outputPadding"></param>
+                /// <param name="dilation"></param>
+                /// <param name="groups"></param>
+                /// <returns></returns>
+                public static Tensor conv_transpose2d(Tensor input, Tensor weight, Tensor? bias = null,
+                    long[]? strides = null,
+                    long[]? padding = null,
+                    long[]? outputPadding = null,
+                    long[]? dilation = null,
+                    long groups = 1)
+                {
+                    strides = (strides == null) ? new long[] { 1, 1 } : strides;
+                    padding = (padding == null) ? new long[] { 0, 0 } : padding;
+                    outputPadding = (outputPadding == null) ? new long[] { 0, 0 } : outputPadding;
+                    dilation = (dilation == null) ? new long[] { 1, 1 } : dilation;
+                    var biasHandle = (bias is null ? IntPtr.Zero : bias.Handle);
+                    unsafe {
+                        fixed (long* pstrides = strides, ppadding = padding, poutputPadding = outputPadding, pdilation = dilation) {
+                            var res =
+                                THSTensor_conv_transpose2d(input.Handle, weight.Handle, biasHandle,
+                                    (IntPtr)pstrides, strides.Length,
+                                    (IntPtr)ppadding, padding.Length,
+                                    (IntPtr)poutputPadding, outputPadding.Length,
+                                    (IntPtr)pdilation, dilation.Length,
+                                    groups);
+                            if (res == IntPtr.Zero) { torch.CheckForErrors(); }
+                            return new Tensor(res);
+                        }
+                    }
+                }
+
             }
         }
     }

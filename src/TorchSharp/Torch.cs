@@ -482,7 +482,6 @@ namespace TorchSharp
         /// </summary>
         public static bool cuda_is_available() => torch.cuda.is_available();
 
-        //[Conditional("DEBUG")]
         public static void CheckForErrors()
         {
             var error = THSTorch_get_and_reset_last_err();
@@ -595,5 +594,6 @@ namespace TorchSharp
         XLA = 9, // XLA / TPU
         META = 14,
         PRIVATEUSE1 = 19, // DirectML
+        DIRECTML = 19, // DirectML -- the use of '19' here is **not** a mistake.
     }
 }

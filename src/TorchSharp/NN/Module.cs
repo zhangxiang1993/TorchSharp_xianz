@@ -148,6 +148,8 @@ namespace TorchSharp
                 /// <param name="dtype">The target element type.</param>
                 protected internal virtual Module _to(Device device, ScalarType dtype)
                 {
+                    if (!has_buffers() && !has_parameters()) return this;
+
                     if (device.type != DeviceType.CUDA && device.type != DeviceType.PRIVATEUSE1) { device = new Device(device.type, -1); };
 
                     if (device.type == DeviceType.CUDA && !torch.cuda.is_available()) throw new InvalidOperationException("CUDA is not available.");
@@ -229,6 +231,8 @@ namespace TorchSharp
                 /// <returns></returns>
                 protected internal virtual Module _to(DeviceType deviceType, int deviceIndex = -1)
                 {
+                    if (!has_buffers() && !has_parameters()) return this;
+
                     if (deviceType != DeviceType.CUDA && deviceType != DeviceType.PRIVATEUSE1) deviceIndex = -1;
 
                     if (deviceType == DeviceType.CUDA && !torch.cuda.is_available()) throw new InvalidOperationException("CUDA is not available.");
@@ -313,6 +317,8 @@ namespace TorchSharp
                 /// <returns></returns>
                 protected internal virtual Module _to(ScalarType dtype)
                 {
+                    if (!has_buffers() && !has_parameters()) return this;
+
                     THSNN_Module_to_dtype(handle, (sbyte)dtype);
                     CheckForErrors();
 
@@ -682,6 +688,26 @@ namespace TorchSharp
                     if (splits.Length <= 1) return false;
                     foreach (var child in named_children().Where(nc => nc.name == splits[0])) {
                         if (child.module.has_parameter(target.Remove(0, splits[0].Length + 1)))
+                            return true;
+                    }
+                    return false;
+                }
+
+                public bool has_parameters()
+                {
+                    if (_internal_params.Count  > 0) return true;
+                    foreach (var child in named_children()) {
+                        if (child.module.has_parameters())
+                            return true;
+                    }
+                    return false;
+                }
+
+                public bool has_buffers()
+                {
+                    if (_internal_params.Count > 0) return true;
+                    foreach (var child in named_children()) {
+                        if (child.module.has_buffers())
                             return true;
                     }
                     return false;
